@@ -6,7 +6,7 @@
 for eachfile in *.fna.gz
 do 
 	gzip -dc $eachfile > $(basename $eachfile ).fna
-	~/Programs/BLAST/bin/blastn -db 16S_ribosomal_RNA -query $(basename $eachfile ).fna -out $(basename $eachfile ).txt
+	~/Programs/BLAST/bin/blastn -db ~/Programs/BLAST/16S_ribosomal_RNA -query $(basename $eachfile ).fna -out $(basename $eachfile ).txt
 	rm *.fna
 done
 #
