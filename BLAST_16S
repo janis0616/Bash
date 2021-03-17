@@ -1,6 +1,6 @@
 #This script will run each .fna.gz file (in the current working directory) 
 #through BLAST+ for database "16S ribosomal RNA" (RefSeq type strains) 
-#and output the top 10 matches to a concatenated txt file 
+#and output the top 10 matches to a concatenated txt file. 
 #
 #Step 1: a for-loop that takes each .fna.gz file, unzips it, and runs it through BLAST+
 for eachfile in *.fna.gz
@@ -14,8 +14,9 @@ done
 for txtfile in *.fna.gz.txt
 do
 	printf "\n\n\n" >> BLAST_output_all.txt
-	printf ${txtfile} >> BLAST_output_all.txt
+	printf ${txtfile}"\n" >> BLAST_output_all.txt
 	grep "^NR" ${txtfile} | head >> BLAST_output_all.txt
 done
+rm *.gz.txt
 #Your resulting file is called "BLAST_output_all.txt" and will have the name of each 
 #sequence, followed by the BLAST results
