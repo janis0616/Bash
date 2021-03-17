@@ -1,0 +1,10 @@
+#Make a mash sketch based on reference sequence(s) compared to query sequences. 
+#The reference sequence(s) must already have a reference.msh file.
+#Query sequences must be in .fna.gz format.
+#Then you can use mash via Bacsort.
+for eachfile in *.fna.gz
+do 
+	gzip -dc $eachfile > $(basename $eachfile ).fna
+	mash dist reference.msh ${eachfile} >> mash_sketch_all.txt
+	rm *.fna
+done
