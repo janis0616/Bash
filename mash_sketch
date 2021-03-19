@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #Make a mash sketch based on reference sequence(s) compared to query sequences. 
 #The reference sequence(s) must already have a reference.msh file.
 #Query sequences must be in .fna.gz format.
