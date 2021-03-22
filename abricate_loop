@@ -1,0 +1,9 @@
+#!/usr/bin/env bash 
+#Run abricate on files for plasmids and AMR genes; put output into a txt file
+for eachfile in *.fna.gz
+do 
+	printf "\n\n\n"${eachfile}"\n" >> abricate_output_all.txt
+	staphb-tk abricate ${eachfile} >> abricate_output_all.txt
+	printf "\n" >> abricate_output_all.txt
+	staphb-tk abricate ${eachfile} --db plasmidfinder >> abricate_output_all.txt
+done 
