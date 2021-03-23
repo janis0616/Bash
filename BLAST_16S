@@ -7,7 +7,7 @@
 for eachfile in *.fna.gz
 do 
 	gzip -dc $eachfile > $(basename $eachfile ).fna
-	~/Programs/BLAST/bin/blastn -db ~/Programs/BLAST/16S_ribosomal_RNA -query $(basename $eachfile ).fna -out $(basename $eachfile ).txt
+	/home/mdungs/Programs/BLAST/bin/blastn -db /home/mdungs/Programs/BLAST/16S_ribosomal_RNA -query $(basename $eachfile ).fna -out $(basename $eachfile ).txt -num_threads 16 -outfmt '7 sseqid stitle evalue bitscore pident'
 	rm *.fna
 done
 #
@@ -16,7 +16,7 @@ for txtfile in *.fna.gz.txt
 do
 	printf "\n\n\n" >> BLAST_output_all.txt
 	printf ${txtfile}"\n" >> BLAST_output_all.txt
-	grep "^NR" ${txtfile} | head >> BLAST_output_all.txt
+	grep "^gi" ${txtfile} | head >> BLAST_output_all.txt
 done
 rm *.gz.txt
 #Your resulting file is called "BLAST_output_all.txt" and will have the name of each 
