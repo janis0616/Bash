@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#Move certain files to a new directory, using a list from a txt file
+#Copy certain files to a new directory, using a list from a txt file
 echo "Enter the name of the text file"
 read filename 
 echo "Enter the name of the directory"
