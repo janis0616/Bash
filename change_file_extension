@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #Changes file extension from .fna to .fasta
 #Necessary for upload to MEGA
-for file in *.fna; do
+for file in *.fna
+do
    mv -- "${file}" "${file%.fna}.fasta"
 done
