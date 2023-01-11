@@ -32,3 +32,4 @@ staphb-tk fastani -q $file5 -r shigellasonnei.fasta >> output.tsv
 staphb-tk abricate $file5 --db ncbi >> output.tsv
 staphb-tk abricate $file5 --db card >> output.tsv
 staphb-tk abricate $file5 --db resfinder >> output.tsv
+staphb-tk abricate $file5 --db plasmidfinder >> output.tsv
