@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#Pipeline for bacterial analysis; trimming, assembly, species identification, ANI to the most common organisms, and AMR genes (based on 3 databases)
+#Output will be in output.tsv
+#Run in directory with the fastq.gz files from one sample (i.e. just one R1 file and one R2 file) and the reference genome files
+#Add reference genomes to fastani lines as necessary
+
+#Identify fastq files
+file1='*R1*.fastq.gz'
+file2='*R2*.fastq.gz'
+#Trimming
+staphb-tk trimmomatic PE -threads 16 $file1 $file2 p1.fq.gz up1.fq.gz p2.fq.gz up2.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36
+#Identify trimmed fastq files
+file3='p1.fq.gz'
+file4='p2.fq.gz'
+#Assembly
+staphb-tk spades -1 $file3 -2 $file4 -o .
+#Identify fasta file
+file5='contigs.fasta'
+#Species identification
+staphb-tk mlst $file5 >> output.tsv
+#ANI
+staphb-tk fastani -q $file5 -r acinetobacterbaumannii.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r ecoli.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r klebsiellaaerogenes.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r klebsiellapneumoniae.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r neisseriameningitidis.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r pseudomonasaeruginosa.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r shigellaboydii.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r shigellaflexneri.fasta >> output.tsv
+staphb-tk fastani -q $file5 -r shigellasonnei.fasta >> output.tsv
+#Identification of AMR genes
+staphb-tk abricate $file5 --db ncbi >> output.tsv
+staphb-tk abricate $file5 --db card >> output.tsv
+staphb-tk abricate $file5 --db resfinder >> output.tsv
