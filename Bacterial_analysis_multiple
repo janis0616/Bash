@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#Pipeline for bacterial analysis; trimming, assembly, species identification, and AMR genes (based on 4 databases)
+#Run in directory with a sub-directory for each set of fastq.gz files (i.e. just one R1 file and one R2 file in each directory)
+#Output file will be renamed to its directory name and moved to the working directory
+#Run fastani with reference fasta once MLST determines likely species
+#A summary file will be generated in ./output that contains the LIMS ID and any matches to KPC, NDM, OXA, VIM, or IMP
+
+#Trimming, assembly, species identification, and AMR genes
+for dir in */
+do
+	cd $dir
+	#Trimming
+	staphb-tk trimmomatic PE -threads 16 *R1*.fastq.gz *R2*.fastq.gz p1.fq.gz up1.fq.gz p2.fq.gz up2.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36
+	#Assembly
+	staphb-tk spades -1 p1.fq.gz -2 p2.fq.gz -o .
+	#Species identification
+	staphb-tk mlst contigs.fasta > output.tsv
+	#Identification of AMR genes
+	staphb-tk abricate contigs.fasta --db ncbi >> output.tsv
+	staphb-tk abricate contigs.fasta --db card >> output.tsv
+	staphb-tk abricate contigs.fasta --db resfinder >> output.tsv
+	staphb-tk abricate contigs.fasta --db plasmidfinder >> output.tsv
+	cd ..
+done
+#Rename output files and move to working directory
+for folder in *
+do
+    (cd "$folder" && processResult output.tsv)  
+    mv "$folder/output.tsv" "${folder}.tsv"
+done
+#Make summary file
+mkdir ./output
+for filename in *.tsv
+do
+	basename $filename .tsv >> ./output/summary_${filename}
+	awk -F"\t"  '$6 ~ "KPC" || $6 ~ "kpc" || $6 ~ "NDM" || $6 ~ "ndm" || $6 ~ "OXA" || $6 ~ "oxa" || $6 ~ "VIM" || $6 ~ "vim" || $6 ~ "IMP" || $6 ~ "imp" {printf $6 "\n"}' $filename >> ./output/summary_${filename}
+done
+
+
