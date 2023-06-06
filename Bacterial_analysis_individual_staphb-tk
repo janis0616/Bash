@@ -3,6 +3,7 @@
 #Output will be in output.tsv
 #Run in directory with the fastq.gz files from one sample (i.e. just one R1 file and one R2 file) 
 #Run fastani with reference fasta once MLST determines likely species
+#Run Quast if metrics are needed
 
 #Identify fastq files
 file1='*R1*.fastq.gz'
