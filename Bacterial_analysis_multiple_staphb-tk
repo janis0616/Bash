@@ -3,7 +3,8 @@
 #Run in directory with a sub-directory for each set of fastq.gz files (i.e. just one R1 file and one R2 file in each directory)
 #Output file will be renamed to its directory name and moved to the working directory
 #Run fastani with reference fasta once MLST determines likely species
-#A summary file will be generated in ./output that contains the LIMS ID and any matches to KPC, NDM, OXA, VIM, or IMP
+#A summary file will be generated in ./output that contains the sample ID and any matches to KPC, NDM, OXA, VIM, or IMP
+#Run Quast if metrics are needed
 
 #Trimming, assembly, species identification, and AMR genes
 for dir in */
@@ -19,21 +20,19 @@ do
 	staphb-tk abricate contigs.fasta --db ncbi >> output.tsv
 	staphb-tk abricate contigs.fasta --db card >> output.tsv
 	staphb-tk abricate contigs.fasta --db resfinder >> output.tsv
-	staphb-tk abricate contigs.fasta --db plasmidfinder >> output.tsv
+	staphb-tk abricate contigs.fasta --db plasmidfinder >> output.tsv 
 	cd ..
 done
 #Rename output files and move to working directory
-for folder in *
-do
-    (cd "$folder" && processResult output.tsv)  
-    mv "$folder/output.tsv" "${folder}.tsv"
+for folder in ./*
+do 
+    mv ${folder}/output.tsv ./${folder}.tsv
 done
 #Make summary file
-mkdir ./output
-for filename in *.tsv
+mkdir output
+for file in *.tsv
 do
-	basename $filename .tsv >> ./output/summary_${filename}
-	awk -F"\t"  '$6 ~ "KPC" || $6 ~ "kpc" || $6 ~ "NDM" || $6 ~ "ndm" || $6 ~ "OXA" || $6 ~ "oxa" || $6 ~ "VIM" || $6 ~ "vim" || $6 ~ "IMP" || $6 ~ "imp" {printf $6 "\n"}' $filename >> ./output/summary_${filename}
+	basename ${file} .tsv >> ./output/summary_${file}
+	awk -F"\t"  '$6 ~ "KPC" || $6 ~ "kpc" || $6 ~ "NDM" || $6 ~ "ndm" || $6 ~ "OXA" || $6 ~ "oxa" || $6 ~ "VIM" || $6 ~ "vim" || $6 ~ "IMP" || $6 ~ "imp" {printf $6 "\n"}' ${file} >> ./output/summary_${file}
 done
-
-
+cat ./output/summary* > ./output/all.tsv
