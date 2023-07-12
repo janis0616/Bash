@@ -1,28 +1,29 @@
 #!/usr/bin/env bash
-#Pipeline for bacterial analysis using Conda; trimming, assembly, species identification, and AMR genes (based on 3 databases)
-#Output will be in output.tsv
+#Pipeline for bacterial analysis using Conda; trimming, assembly, species identification, and AMR genes 
 #Run in directory with the fastq.gz files from one sample (i.e. just one R1 file and one R2 file) 
+#Output will be in output.tsv
 #Run fastani with reference fasta once MLST determines likely species
 
 #Activate Conda environment before running!! conda activate bacterial
 
-#Identify fastq files
-file1='*R1*.fastq.gz'
-file2='*R2*.fastq.gz'
 #Trimming
-trimmomatic PE -threads 16 $file1 $file2 p1.fq.gz up1.fq.gz p2.fq.gz up2.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36
-#Identify trimmed fastq files
-file3='p1.fq.gz'
-file4='p2.fq.gz'
+trimmomatic PE -threads 16 *R1*.fastq.gz *R2*.fastq.gz p1.fq.gz up1.fq.gz p2.fq.gz up2.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36
 #Assembly
-spades -1 $file3 -2 $file4 -o .
-#Identify fasta file
-file5='contigs.fasta'
+spades -1 p1.fq.gz -2 p2.fq.gz -o .
 #Species identification
-mlst $file5 >> output.tsv
+printf *.fastq.gz | cut -d _ -f 1 >> output.tsv
+printf "\n\nSpecies identification\n" >> output.tsv
+mlst contigs.fasta >> output.tsv
 #Identification of AMR genes
-abricate $file5 --db ncbi >> output.tsv
-abricate $file5 --db card >> output.tsv
-abricate $file5 --db resfinder >> output.tsv
-abricate $file5 --db plasmidfinder >> output.tsv
-
+printf "\n\n\nAMR Genes Identified\n\n"
+printf "\nNCBI database\n" >> output.tsv
+abricate contigs.fasta --db ncbi >> output.tsv
+printf "\nCARD database\n" >> output.tsv
+abricate contigs.fasta --db card >> output.tsv
+printf "\nResfinder database\n" >> output.tsv
+abricate contigs.fasta --db resfinder >> output.tsv
+printf "\nPlasmidfinder database\n" >> output.tsv
+abricate contigs.fasta --db plasmidfinder >> output.tsv
+#Summary
+printf "\nSummary of AMR Genes of Interest (KPC, NDM, OXA, VIM, IMP) \n" >> output.tsv
+awk -F"\t"  '$6 ~ "KPC" || $6 ~ "kpc" || $6 ~ "NDM" || $6 ~ "ndm" || $6 ~ "OXA" || $6 ~ "oxa" || $6 ~ "VIM" || $6 ~ "vim" || $6 ~ "IMP" || $6 ~ "imp" {printf $6 "\n"}' output.tsv >> output.tsv
