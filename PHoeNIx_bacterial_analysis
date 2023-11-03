@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#Pipeline for running and organizing output from PHoeNIx
+
+#Make sure PHoeNIx and Kraken2 are installed on your computer, and make sure you have the Standard-08 database installed in /kraken2-master/Standard-08
+
+#Put all reads in /kraken2-master/reads
+##Each set of reads must be in a folder with the LIMS ID as the folder name
+##There cannot be any other files in the reads directory besides each set of fastq files in their folders
+
+#Output will be in output.tsv in /kraken2-master/results
+##Make sure there is not already a file called output.tsv in that directory
+
+#Working directory must be /kraken2-master
+
+#Edit script so paths are correct for your computer
+
+#Before starting, activate your Conda environment that has PHoeNIx
+
+#Create the sample sheet 
+printf "sample,fastq_1,fastq_2\n" > /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/samplesheet.csv
+cd /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/reads/
+
+#Add each sample to the sample sheet
+for dir in *
+do
+	echo "$dir" | head -c 10 >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/samplesheet.csv
+	printf "," >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/samplesheet.csv
+	cd $dir
+	realpath *R1* | head -c -1 >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/samplesheet.csv
+	printf "," >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/samplesheet.csv
+	realpath *R2* >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/samplesheet.csv
+	cd /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/reads/
+done
+
+#Run PHoeNIx
+cd /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/
+nextflow run phoenix/main.nf -profile docker -entry PHOENIX --kraken2db ./Standard-08 --input ./samplesheet.csv
+
+#Organize the output 
+cd /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/
+for dir2 in [0-9]*
+do 
+	printf "${dir2}" | sed 's/[^0-9]*//g' | head -c 10 >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	printf "\n\n" >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	cd $dir2
+	cat *summaryline.tsv >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	printf "\n\n" >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	cat *synopsis >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	printf "\n\n" >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	cd ./ANI/
+	cat *fastANI.txt >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	printf "\n\n" >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	cd ..
+	cd ./AMRFinder/
+	cat *all_genes.tsv >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+		printf "\n\n\n\n" >> /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/output.csv
+	cd /home/mdungsmain/Janis/Programs/Kraken2/kraken2-master/results/
+done
+
+
