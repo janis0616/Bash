@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#Pipeline for bacterial analysis using Conda; trimming, assembly, species identification, and AMR genes
+#Make sure you have FastQC and Quast installed on your computer; make sure you have a conda environment with trimmomatic, spades, mlst, and abricate
+#Run in directory with a sub-directory for each set of fastq.gz files (i.e. just one R1 file and one R2 file in each directory); the name of each directory should contain the LIMS ID of the sample
+#Output will be in output.tsv
+#Run fastani with reference fasta once MLST determines likely species
+
+#First, activate Conda environment: conda activate bacterial
+
+for dir in */
+do
+	cd $dir
+	printf "${dir}" | cut -d / -f 1 >> output.tsv
+	#FastQC (quality report)
+	fastqc *R1*.fastq.gz *R2*.fastq.gz -o . --threads 8 --extract 
+	#Pre-processing (trimming and filtering)
+	##ILLUMINACLIP: Cut adapter and other illumina-specific sequences from the read.
+	##LEADING: Cut bases off the start of a read, if below a threshold quality
+	##TRAILING: Cut bases off the end of a read, if below a threshold quality
+	##MINLEN: Drop the read if it is below a specified length
+	trimmomatic PE -threads 16 *R1*.fastq.gz *R2*.fastq.gz p1.fq.gz up1.fq.gz p2.fq.gz up2.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36
+	#FastQC (quality report)
+	fastqc p1.fq.gz -2 p2.fq.gz -o . --threads 8 --extract 
+	printf "\n\nFastQC Quality Report for Reads: Pre- and Post-Processing\n" >> output.tsv
+	cat ./*/summary.txt >> output.tsv 
+	#Assembly
+	spades -1 p1.fq.gz -2 p2.fq.gz -o .
+	#Quast (quality report)
+	printf "\n\nQuast Quality Report for Consensus Genome\n" >> output.tsv
+	python /home/mdungsmain/anaconda3/bin/quast.py -o . --threads 8 contigs.fasta >> output.tsv
+	#Species identification
+	printf "\n\nSpecies Identification\n" >> output.tsv
+	mlst contigs.fasta >> output.tsv
+	#Identification of AMR genes
+	printf "\n\n\nAMR Genes Identified\n\n"
+	printf "\nNCBI Database\n" >> output.tsv
+	abricate contigs.fasta --db ncbi >> output.tsv
+	printf "\nCARD Database\n" >> output.tsv
+	abricate contigs.fasta --db card >> output.tsv
+	printf "\nResfinder Database\n" >> output.tsv
+	abricate contigs.fasta --db resfinder >> output.tsv
+	#Summary
+	printf "\nSummary of AMR Genes of Interest (KPC, NDM, OXA, VIM, IMP) \n" >> output.tsv
+	awk -F"\t"  '$6 ~ "KPC" || $6 ~ "kpc" || $6 ~ "NDM" || $6 ~ "ndm" || $6 ~ "OXA" || $6 ~ "oxa" || $6 ~ "VIM" || $6 ~ "vim" || $6 ~ "IMP" || $6 ~ "imp" {printf $6 "\n"}' output.tsv >> output.tsv
+	cd ..
+done
+
+
