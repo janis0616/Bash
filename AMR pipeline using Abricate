@@ -27,7 +27,8 @@ do
 	spades -1 p1.fq.gz -2 p2.fq.gz -o .
 	#Quast (quality report)
 	printf "\n\nQuast Quality Report for Consensus Genome\n" >> output.tsv
-	python /home/mdungsmain/anaconda3/bin/quast.py -o . --threads 8 contigs.fasta >> output.tsv
+	python /home/mdungsmain/anaconda3/bin/quast.py -o . --threads 8 contigs.fasta 
+	printf report.tsv >> output.tsv
 	#Species identification
 	printf "\n\nSpecies Identification\n" >> output.tsv
 	mlst contigs.fasta >> output.tsv
@@ -44,5 +45,3 @@ do
 	awk -F"\t"  '$6 ~ "KPC" || $6 ~ "kpc" || $6 ~ "NDM" || $6 ~ "ndm" || $6 ~ "OXA" || $6 ~ "oxa" || $6 ~ "VIM" || $6 ~ "vim" || $6 ~ "IMP" || $6 ~ "imp" {printf $6 "\n"}' output.tsv >> output.tsv
 	cd ..
 done
-
-
