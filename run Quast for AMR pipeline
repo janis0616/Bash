@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#Pipeline for running Quast on multiple samples
+#Make sure you have Quast installed on your computer
+#Run in directory with a sub-directory for each sample; one fasta file called contigs.fasta in each sub-directory
+#Output will be added to output.tsv
+#Edit paths as necessary
+
+for dir in */
+do
+	cd $dir 
+	#Quast (quality report)
+	printf "\n\nQuast Quality Report\n" >> output.tsv
+	python /home/mdungsmain/anaconda3/bin/quast.py -o . --threads 10 contigs.fasta 
+	cat report.tsv >> output.tsv
+	cd ..
+done
+
+
