@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#Pipeline for bacterial species identification and ANI using the tool AutoMLST
+#Make sure you have a conda environment with the autoMLST dependencies (in the environment.yml file when you download autoMLST; it's easiest to just add to environment.yml and run: conda env create --file environment.yml)
+#Run in directory with a sub-directory for each sample, containing the fasta file
+#Output will be in output.tsv
+#Edit paths as necessary
+
+#First, activate Conda environment: conda activate automlst
+
+for dir in */
+do
+	cd $dir
+	printf "\n\nAutoMLST\n" >> output.tsv
+	mkdir ./fasta/
+	cp contigs.fasta ./fasta/contigs.fasta
+	#ANI (autoMLST)
+	python /home/mdungsmain/Janis/Programs/automlst/automlst.py ./fasta/ ./ -c 10 -ref /home/mdungsmain/Janis/Programs/automlst/refseqreduced.db -rd /home/mdungsmain/Janis/Programs/automlst/automlstrefs.tar.gz
+	head -11 mash_distances.txt >> output.tsv
+	cd ..
+done
+
+
