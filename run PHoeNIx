@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+#Pipeline for running and organizing output from PHoeNIx
+
+#Make sure PHoeNIx is installed in .../kraken2/phoenix
+#Make sure you have the Standard-08 database installed in .../kraken2/Standard-08
+
+#Make a directory called "reads" within your Kraken2 directory
+##Within the "reads" directory, make a sub-directory for each sample (the directory name should be the sample name)
+##Each sample sub-directory should include ONLY the 2 fastq files (each fastq file should have the sample name before any underscore in the file name)
+
+#Before starting, activate your PHoeNIx Conda environment (i.e. conda activate phoenix or whatever you named it)
+
+#Edit script so paths are correct for your computer:
+#home: the location of your kraken2 directory
+home=/mnt/data/kraken2/
+#samplesheet: the location where your samplesheet will be created and what it will be named
+samplesheet=/mnt/data/kraken2/samplesheet.csv
+#output: the location where your output file will be created and what it will be named
+output=/mnt/data/kraken2/phx_output/output.tsv
+#summary: the location where your QC summary file will be created and what it will be named
+summary=/mnt/data/kraken2/phx_output/qc_summary.tsv
+
+cd $home
+
+#Create the sample sheet
+printf "sample,fastq_1,fastq_2\n" > $samplesheet
+cd reads/
+
+#Add each sample to the sample sheet
+for dir in */
+do
+	cd $dir
+	echo "$dir" | cut -d/ -f1 | tr -d '\n' >> $samplesheet
+	for file in *
+	do
+		printf "," >> $samplesheet
+		realpath ${file} | tr -d '\n' >> $samplesheet
+	done
+	printf "\n" >> $samplesheet
+	cd ..
+done
+
+cd $home
+
+#Run PHoeNIx
+nextflow run phoenix/main.nf -profile docker -entry PHOENIX --kraken2db ./Standard-08 --input $samplesheet
+
+#Assemble the output 
+cd phx_output/
+echo "PHoeNIx Output" > $output
+for dir2 in */
+do 
+	printf "${dir2%%_*}\n\n" >> $output
+	printf "\n\n" >> $output
+	cd ${dir2}
+	cat *summaryline.tsv >> $output
+	printf "\n\n" >> $output
+	cat *synopsis >> $output
+	printf "\n\n" >> $output
+	cd ANI/
+	cat *fastANI.txt >> $output
+	printf "\n\n" >> $output
+	cd ..
+	cd AMRFinder/
+	cat *all_genes.tsv >> $output
+	printf "\nSummary of AMR Genes of Interest\n" >> $output
+	awk -F"\t"  '$0 ~ "KPC" || $0 ~ "kpc" || $0 ~ "NDM" || $0 ~ "ndm" || $0 ~ "OXA" || $0 ~ "oxa" || $0 ~ "VIM" || $0 ~ "vim" || $0 ~ "IMP" || $0 ~ "imp" {printf $0 "\n"}' *all_genes.tsv >> $output
+	printf "\n\n\n\n" >> $output
+	cd $home
+	cd phx_output/
+done
+
+#Create QC summary file
+cd $home
+for dir in */
+do 
+	if [[ "$dir" != multiqc* ]] && [[ "$dir" != pipeline* ]]; then
+		printf "${dir%%_*}\n\n" >> $summary
+		cd ${dir}
+		if compgen -G *summaryline.tsv > /dev/null; then
+			awk -F"\t" '{print $2, "\t", $4, "\t", $5}' *summaryline.tsv >> $summary
+		else
+			printf "\nPass/Fail\tCoverage\tGenome Length\n" >> $summary
+			printf "FAIL\tN/A\tN/A\n"  >> $summary
+		fi
+		printf "\nQuality Score - take average\n" >> $summary
+		if compgen -G *synopsis > /dev/null; then
+			awk -F":" 'NR >= 9 && NR <= 10 {print $3}' *synopsis >> $summary
+		else
+			echo "N/A" >> $summary
+		fi
+		cd ANI/
+		printf "\nANI and Species\n" >> $summary
+		if compgen -G *fastANI.txt > /dev/null; then
+			awk -F"\t" '{print $3, "\t", $1}' *fastANI.txt >> $summary
+		else
+			echo "N/A" >> $summary
+		fi
+		cd ..
+		cd AMRFinder/
+		printf "\nAMR Genes of Interest\n" >> $summary
+		if compgen -G *all_genes.tsv > /dev/null; then
+		awk -F"\t"  '$0 ~ "KPC" || $0 ~ "kpc" || $0 ~ "NDM" || $0 ~ "ndm" || $0 ~ "OXA" || $0 ~ "oxa" || $0 ~ "VIM" || $0 ~ "vim" || $0 ~ "IMP" || $0 ~ "imp" {print $6, "\t", $7}' *all_genes.tsv >> $summary
+		else
+			echo "N/A" >> $summary
+		fi
+		printf "\n\n\n\n" >> $summary
+	fi
+	cd $home
+done
