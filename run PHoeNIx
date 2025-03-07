@@ -107,5 +107,4 @@ do
 		fi
 		printf "\n\n\n\n" >> $summary
 	fi
-	cd $home
 done
