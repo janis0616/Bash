@@ -50,7 +50,7 @@ cd phx_output/
 echo "PHoeNIx Output" > $output
 for dir2 in */
 do 
-	printf "${dir2%%_*}\n\n" >> $output
+	printf "${dir2}" >> $output
 	printf "\n\n" >> $output
 	cd ${dir2}
 	cat *summaryline.tsv >> $output
@@ -107,4 +107,8 @@ do
 		fi
 		printf "\n\n\n\n" >> $summary
 	fi
+	cd $home
+	cd ./phx_output/
 done
+
+
