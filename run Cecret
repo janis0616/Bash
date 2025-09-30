@@ -37,5 +37,5 @@ cd $home
 nextflow run main.nf -c configs/docker.config --sample_sheet ./samplesheet.csv
 
 #Concatenate the consensus sequences
-cd consensus/
-cat *.fa > all_sequences.fasta
+cd cecret/consensus/
+cat *.fa > ../all_sequences.fasta
