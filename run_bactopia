@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#Pipeline for running and organizing output from Bactopia
+
+#Install Bactopia if not already installed:
+##git clone https://github.com/bactopia/bactopia.git
+##conda create -n bactopia -c conda-forge -c bioconda bactopia
+##bactopia datasets
+#Make sure Docker is installed; if you don't have Docker, you can still run Bactopia, but you will need to edit this script
+
+#Within the Bactopia directory, there should be a directory called "reads" (make it if it is not already there)
+#Download your fastq files into the "reads" directory
+
+#If there is an error, check the following:
+##Sample names must end in R1.fastq.gz or R2.fastq.gz or else the samplesheet will not be created properly; this script should prepare the reads files into this format, but if it doesn't, this may have to be done manually
+##The reads files must be in the format .fastq.gz 
+##This script is for running Illumina paired-end reads; modifications will need to be made for long-read or hybrid assembly
+##Make sure all paths are correct 
+
+#Before running this script, activate your Bactopia Conda environment: conda activate bactopia
+
+#Paths
+home=/home/mdungsmain/Janis/Programs/bactopia/
+reads=/home/mdungsmain/Janis/Programs/bactopia/reads/
+datasets=/home/mdungsmain/.bactopia/datasets/
+
+#Navigate to the reads directory
+cd ${reads}
+
+#Move all the fastq files out of their sub-directories
+find . -mindepth 2 -type f -exec mv {} . \;
+
+#Delete any file in /reads that doesn't end with ".fastq.gz"
+for filename in *; do
+	if [[ ${filename} != *.fastq.gz ]]; then
+		rm -r ${filename}
+	fi
+done
+
+#Rename the fastq files so they end with R1.fastq.gz or R2.fastq.gz
+for file in *; do
+	if [[ "$file" == *R1* ]]; then
+		new_name="${file%%R1*}R1.fastq.gz"
+		mv "$file" "$new_name"
+	fi
+done
+
+for file in *; do
+	if [[ "$file" == *R2* ]]; then
+		new_name="${file%%R2*}R2.fastq.gz"
+		mv "$file" "$new_name"
+	fi
+done
+
+#Navigate back to /bactopia
+cd ${home}
+
+#Make the sample sheet
+bactopia prepare -p ${reads} > fastqs.txt
+
+#Run Bactopia
+bactopia -profile docker --datasets ${datasets} --samples ./fastqs.txt --outdir ./results
