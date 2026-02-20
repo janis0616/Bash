@@ -43,7 +43,7 @@ done
 cd $home
 
 #Run PHoeNIx
-nextflow run phoenix/main.nf -profile docker -entry PHOENIX --kraken2db ./Standard-08 --input $samplesheet
+nextflow run cdcgov/phoenix -profile docker -entry PHOENIX --kraken2db ./Standard-08 --input $samplesheet
 
 #Assemble the output 
 cd phx_output/
