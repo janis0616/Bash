@@ -1,0 +1,29 @@
+#!/usr/bin/env bash 
+#run in the MIRA-NF/output directory
+
+for file in */IRMA/*/*; do
+	if [[ $file == *HA*.fasta ]]; then
+		dirname="${file%%/*}"
+		filename="${file##*/}"
+		newfile="${dirname}_${filename}"
+		cp "$file" "${newfile}"
+		sed -i -e "s/^>/>$dirname/" ${newfile}
+	fi
+done
+
+for file2 in */IRMA/*/*; do
+	if [[ $file2 == *NA*.fasta ]]; then
+		dirname2="${file2%%/*}"
+		filename2="${file2##*/}"
+		newfile2="${dirname2}_${filename2}"
+		cp "$file2" "${newfile2}"
+		sed -i -e "s/^>/>$dirname2/" ${newfile2}
+	fi
+done
+
+cat *HA_H1.fasta > HA_H1.fasta
+cat *HA_H3.fasta > HA_H3.fasta
+cat *NA_N1.fasta > NA_N1.fasta
+cat *NA_N2.fasta > NA_N2.fasta
+cat *B_NA.fasta > B_NA.fasta
+cat *B_HA.fasta > B_HA.fasta
