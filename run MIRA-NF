@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#script for preparing files and samplesheet for MIRA-NF for influenza analysis on Illumina paired-end data
+#run this script in the MIRA-NF directory
+#make sure there is a directory called "fastqs" that contains the fastq files
+#change file paths as necessary
+
+home=/home/mdungsmain/Janis/Programs/MIRA-NF/
+reads=/home/mdungsmain/Janis/Programs/MIRA-NF/fastqs/
+samplesheet=/home/mdungsmain/Janis/Programs/MIRA-NF/samplesheet.csv
+
+#move all files out of sub-directories
+cd $reads
+mv ./*/* .
+
+#remove "_001" from file names
+for file1 in *.fastq.gz; do
+	newfile=$(echo $file1 | sed 's/_001//')
+	mv $file1 $newfile
+done
+
+#remove unnecessary files and directories
+rm *.json
+rm -R */
+
+#samplesheet
+printf "sample_id,sample_type\n" > $samplesheet
+for file2 in *R1*; do
+	printf "${file2%%_R[12].fastq.gz},Test\n" >> $samplesheet
+done
